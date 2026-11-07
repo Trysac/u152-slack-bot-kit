@@ -1,55 +1,39 @@
-# slack-bot-kit
+# @trysac/slack-bot-kit
 
-[![npm version](https://img.shields.io/npm/v/@trysac/slack-bot-kit.svg)](https://www.npmjs.com/package/@trysac/slack-bot-kit)
-[![license: MIT](https://img.shields.io/npm/l/@trysac/slack-bot-kit.svg)](LICENSE)
-[![CI](https://github.com/Trysac/u152-slack-bot-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u152-slack-bot-kit/actions/workflows/ci.yml)
+Framework-free Slack bot kit: v0 request signature verification, slash command parsing and routing, url_verification handling, and typed responses for Node.js 20+ and Web Crypto runtimes.
 
-Framework-free Slack bot kit: v0 request signature verification, slash command parsing and routing, url_verification handling and typed responses
+## The Problem
+Slack apps must verify every request with the v0 HMAC signature and a timestamp window to ensure security, yet small bots often skip it, compare signatures with insecure operators, or parse the body after a framework has already re-encoded it. This kit provides the auditable, secure core required for Slack integrations without the overhead of heavy frameworks.
 
-## Problem
-
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and why existing
-packages do not solve it well. Keep it factual; link to an issue or decision record when there is one.
-
-## Install
-
-```sh
+## Installation
+```bash
 npm install @trysac/slack-bot-kit
 ```
 
-Requires Node.js 20 or newer. The package ships ES modules with TypeScript declarations.
-
 ## Usage
-
 ```ts
-import { greet } from "@trysac/slack-bot-kit";
-
-// Build a greeting; surrounding whitespace is ignored.
-const message = greet("  Ada ");
-console.log(message); // "Hello, Ada!"
-
-try {
-  greet("   ");
-} catch (error) {
-  console.error((error as Error).message); // "name must not be empty"
-}
+import { CommandRouter, handleSlackHttp, inChannel } from "@trysac/slack-bot-kit";
+const router = new CommandRouter().on("/deploy", (cmd) => inChannel(`Deployed ${cmd.text}`));
+const res = await handleSlackHttp(
+  { rawBody, headers, contentType: "application/x-www-form-urlencoded" },
+  { signingSecret: process.env.SLACK_SIGNING_SECRET!, router, now: () => Math.floor(Date.now() / 1000) }
+);
 ```
 
-## API
+## API Reference
 
-| Export | Signature | Description |
-|---|---|---|
-| `greet` | `(name: string) => string` | Placeholder API; replace it with the real one. |
+### Core Functions
+- `verifySlackRequest(input)`: Validates Slack v0 signatures using HMAC-SHA256. Throws `SlackError` on failure.
+- `parseSlashCommand(rawBody)`: Parses `application/x-www-form-urlencoded` bodies into a typed `SlashCommand` object.
+- `handleSlackHttp(req, opts)`: Dispatches verified HTTP requests to command routers or JSON handlers.
+- `ephemeral(text)` / `inChannel(text)`: Creates typed `SlackResponse` objects.
 
-## Development
+### Classes
+- `CommandRouter`: Manages slash command handlers. Registers commands via `.on(command, handler)` and dispatches via `.dispatch(cmd)`.
+- `SlackError`: Base error class with code: `missing_header`, `invalid_timestamp`, `stale_timestamp`, `bad_signature`, `body_too_large`, `invalid_payload`, `invalid_options`.
 
-```sh
-npm install
-npm run check   # lint, format, types, tests with coverage, docs, secrets
-```
+## Why not @slack/bolt?
+@slack/bolt is a feature-rich framework including integrated server infrastructure, OAuth support, and a dependency tree that can increase cold start times in serverless environments. This library is a lightweight, framework-agnostic alternative consisting only of verification, routing, and dispatch logic.
 
-See [AGENTS.md](AGENTS.md) for the full command list and [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
-
-## License
-
-[MIT](LICENSE) © 2026 Miguel Gomez
+## Security
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model and limits.
