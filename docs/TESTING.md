@@ -1,28 +1,14 @@
-# Testing
+# Testing Strategy
 
-## Tools
+## Test Files
+- `test/all.test.ts`: Core acceptance suite verifying signature vectors, timestamp boundaries, and error codes.
+- `test/extended.test.ts`: Verifies CommandRouter dispatching logic and `handleSlackHttp` lifecycle events.
+- `test/index.test.ts`: Extensive unit testing of `verifySlackRequest` edge cases (invalid options, header variations, signature malformations).
+- `test/slack-bot-kit.test.ts`: Validation of the full acceptance test suite using Slack's published example vectors.
 
-- [Vitest](https://vitest.dev/) runs the suites in `test/`.
-- Coverage is collected with V8 (`@vitest/coverage-v8`) over `src/`.
-
-## Commands
-
-```sh
-npm test            # vitest run --coverage
-npx vitest          # watch mode while developing
-npm run check       # every gate, including tests
-```
-
-## Rules
-
-- Coverage must stay at or above 80 % for lines, branches, functions and statements (`vitest.config.ts`).
-  Lowering the thresholds is not allowed.
-- Test through the public entry point (`src/index.ts`) and assert observable behavior: return values,
-  thrown errors and their messages.
-- Each bug fix adds a test that fails without the fix.
-- Tests are deterministic: no network, no real clock or randomness without injection, no shared state between
-  tests. Temporary files go to the OS temp directory and are removed by the test.
-
-## Reports
-
-Coverage reports are written to `coverage/` (text summary and `lcov`). The folder is ignored by git.
+## Coverage Areas
+- **Signature Verification**: Validates success/failure for valid, modified, andmalformed signatures.
+- **Boundary Conditions**: Timestamp drift (stale/valid), max body size exceeded, missing headers, case-insensitive headers, invalid options (negative max bytes, zero tolerance).
+- **Slash Command Parsing**: Validates required field presence and parsing of valid URL-encoded bodies.
+- **Router Logic**: Dispatching correctly, handling unknown commands, error recovery in handlers, and duplicate registration protection.
+- **Security Telemetry**: Explicit checks ensure the `onEvent` hook never captures the signing secret, the signature hex, or the raw body.

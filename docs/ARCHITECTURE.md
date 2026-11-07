@@ -1,30 +1,34 @@
 # Architecture
 
-## Overview
+`@trysac/slack-bot-kit` is a zero-dependency, runtime-agnostic library designed for modern JavaScript runtimes with Web Crypto support (Node 20+, Deno, Cloudflare Workers, Bun).
 
-`@trysac/slack-bot-kit` is a small, dependency-free TypeScript library published to npm as ES modules with type
-declarations. Framework-free Slack bot kit: v0 request signature verification, slash command parsing and routing, url_verification handling and typed responses
+## Component Diagram
 
-## Modules
+```
+Incoming Request
+       │
+       ▼
+┌───────────────────────────────┐
+│      verifySlackRequest       │
+│  - Size check (< 1MB)         │
+│  - Header extraction (CI)     │
+│  - Drift verification         │
+│  - HMAC-SHA256 (Web Crypto)   │
+│  - Constant-time comparison   │
+└──────────────┬────────────────┘
+               │ Validated
+               ▼
+┌───────────────────────────────┐
+│       handleSlackHttp         │
+├──────────────┬────────────────┤
+│ JSON         │ URL-Encoded    │
+│ Verification │ Slash Command  │
+│ (Challenge)  │ (Router)       │
+└──────────────┴────────────────┘
+```
 
-| Module | Responsibility |
-|---|---|
-| `src/index.ts` | Public API. Everything consumers import is exported from here. |
+## Security Design
 
-Add a row when you add a module. Internal modules are not re-exported unless they are part of the public API.
-
-## Boundaries
-
-- No runtime dependencies by default; any addition is justified in [STACK.md](STACK.md).
-- No I/O at import time. Functions are pure unless their documentation says otherwise.
-- Errors are thrown as built-in error types (`TypeError`, `RangeError`) with actionable messages.
-
-## Build and distribution
-
-`npm run build` compiles `src/` to `dist/` with `tsconfig.build.json`. Only `dist/` is published
-(`files` in `package.json`).
-
-## Decisions
-
-Architectural decisions are recorded in [decisions/](decisions/), starting with
-[0001](decisions/0001-record-architecture-decisions.md).
+1. **Constant-time comparison**: Hex decodes exactly 32 bytes and compares via bitwise XOR accumulator to guard against timing side-channel attacks.
+2. **Capture before parse**: The raw HTTP request string must be verified prior to parsing to avoid encoding ambiguities.
+3. **Sanitized telemetry**: The `onEvent` hook strictly prohibits logging secrets, signatures, or raw payloads.

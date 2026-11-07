@@ -9,4 +9,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Implement framework-free Slack bot kit with Web Crypto v0 signature verification, slash command router, and typed response helpers.
 - Initial project structure from the factory utility template.
