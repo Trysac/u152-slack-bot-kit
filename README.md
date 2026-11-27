@@ -6,9 +6,15 @@ Framework-free Slack bot kit: v0 request signature verification, slash command p
 Slack apps must verify every request with the v0 HMAC signature and a timestamp window to ensure security, yet small bots often skip it, compare signatures with insecure operators, or parse the body after a framework has already re-encoded it. This kit provides the auditable, secure core required for Slack integrations without the overhead of heavy frameworks.
 
 ## Installation
-```bash
-npm install @trysac/slack-bot-kit
+Not published to npm yet. Build it from a clone, then install it from the local path:
+
+```sh
+git clone https://github.com/Trysac/u152-slack-bot-kit.git
+cd u152-slack-bot-kit && npm ci && npm run build
+cd ../your-project && npm install ../u152-slack-bot-kit
 ```
+
+Imports keep the package name: `import { ... } from "@trysac/slack-bot-kit"`.
 
 ## Usage
 ```ts
